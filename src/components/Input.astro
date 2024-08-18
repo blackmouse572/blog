@@ -1,0 +1,7 @@
+---
+import Checkbox from '@components/ui/checkbox';
+
+const props = Astro.props;
+---
+
+{props.type === 'checkbox' ? <Checkbox {...props} disabled={false} /> : <input type="text" {...props} />}

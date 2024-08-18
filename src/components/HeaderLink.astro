@@ -1,0 +1,19 @@
+---
+import Button from '@components/ui/button';
+
+const { href, class: className, ...props } = Astro.props;
+
+const { pathname } = Astro.url;
+const subpath = pathname.match(/[^\/]+/g);
+const isActive = href === pathname || href === '/' + subpath?.[0];
+---
+
+<Button.Root
+  intent={isActive ? 'primary' : 'gray'}
+  href={href as string}
+  variant={isActive ? 'solid' : 'ghost'}
+  className={className}
+  {...props}
+>
+  <slot />
+</Button.Root>

@@ -1,0 +1,44 @@
+---
+import { IconBrandGithub, IconBrandLinkedin, IconWorld } from '@tabler/icons-react';
+
+const today = new Date();
+---
+
+<footer>
+  &copy; {today.getFullYear()} Nguyen Tuan Ngoc (Jaden Nguyen). All rights reserved
+  <div class="social-links">
+    <a href="https://github.com/blackmouse572" target="_blank">
+      <span class="sr-only">Follow Jaden on Github</span>
+      <IconBrandGithub size={32} />
+    </a>
+    <a href="https://www.linkedin.com/in/tu%E1%BA%A5n-ng%E1%BB%8Dc-nguy%E1%BB%85n-987782248/" target="_blank">
+      <span class="sr-only">Follow Jaden on Linkedin</span>
+      <IconBrandLinkedin size={32} />
+    </a>
+    <a href="https://ngocnt.dev" target="_blank">
+      <span class="sr-only">Go to Jaden's Portfolio</span>
+      <IconWorld size={32} />
+    </a>
+  </div>
+</footer>
+<style>
+  footer {
+    padding: 2em 1em 6em 1em;
+    background: linear-gradient(var(--gray-gradient)) no-repeat;
+    color: rgb(var(--gray));
+    text-align: center;
+  }
+  .social-links {
+    display: flex;
+    justify-content: center;
+    gap: 1em;
+    margin-top: 1em;
+  }
+  .social-links a {
+    text-decoration: none;
+    color: rgb(var(--gray));
+  }
+  .social-links a:hover {
+    color: rgb(var(--gray-dark));
+  }
+</style>

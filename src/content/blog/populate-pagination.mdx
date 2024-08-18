@@ -1,0 +1,377 @@
+---
+title: 'Populate, Hot Reload and Cursor pagination'
+description: 'Today, I gonna start doing user and auth endpoints. My to do list includes Roles, Users, Forget Password'
+pubDate: 'Aug 17 2024'
+heroImage: '/blog-placeholder-5.jpg'
+tags: ['golang', 'gorm', 'echo', 'pagination', 'populate']
+---
+
+Are you tired of writing repetitive code for pagination, filtering, and sorting? Do you want a flexible and efficient way to handle complex queries and retrieve data from your database? Look no further! We will guide you through the process of implementing dynamic query and pagination, allowing you to easily handle pagination, filtering, and sorting in your user and auth endpoints.
+
+So, if you're ready to level up your querying and pagination game in Go, let's dive into the code and explore the world of "Populate, Hot Reload, and Cursor Pagination"!
+
+## Higher level of query and pagination
+### Dynamic query and pagination
+The get all users endpoint is really easy at first as you only need to do is create a `FindMany` function for `UserStore`. But eventually, it not so easy cause i need to do
+
+-  Pagination
+- Filter
+- Sort
+
+The sort and filter is tricky cause i want to archive an abstract way like dynamic passing an <strong>allowed sort fields</strong> and an <strong>allowed search fields</strong> so that i don't have to "refactor" code every business changes.
+
+My approach is 
+- `FilterSortRequest` for find options
+- `DatabseFilterConfig` for config fields
+
+```go title="request.go"
+
+package misc
+
+type FilterRequest struct {
+	Take   int    `json:"take"`
+	Skip   int    `json:"skip"`
+	Cursor string `json:"cursor"`
+	Search string `json:"search"`
+}
+
+type FilterSortRequest struct {
+	FilterRequest
+	SortBy string `json:"sort_by"`
+	Order  string `json:"order"`
+}
+
+type DatabaseFilterConfig struct {
+	AllowedSorts  []string
+	DefaultSort   string
+	AllowedSearch []string
+}
+```
+
+And of course a response struct
+
+```go title="response.go"
+package misc
+
+type ListResponse struct {
+	Data interface{}  `json:"data"`
+	Meta MetaResponse `json:"meta"`
+}
+
+type MetaResponse struct {
+	Total      int64  `json:"total"`
+	NextCursor string `json:"next_cursor"`
+}
+```
+
+Okay, everything is setup, now go for `FindMany` function. It should use 2 config and return an `User` model
+```go title="stores/user.go"
+func (us *UserStore) FindMany(find misc.FilterSortRequest, options misc.DatabaseFilterConfig) ([]models.User, error) {
+	var users []models.User
+	query := us.db.Limit(find.Take).Offset(find.Skip)
+	if find.Search != "" {
+		for _, s := range options.AllowedSearch {
+			query = query.Or(s+" LIKE ?", "%"+find.Search+"%")
+		}
+	}
+	if find.Cursor != "" {
+		query = query.Where("id > ?", find.Cursor)
+	}
+
+	if find.SortBy != "" {
+		if find.Order == "asc" {
+			query = query.Order(find.SortBy + " ASC")
+		} else {
+			query = query.Order(find.SortBy + " DESC")
+		}
+	} else {
+		query = query.Order(options.DefaultSort)
+	}
+
+	err := query.Find(&users).Error
+	return users, err
+}
+```
+
+As the result, we can pass-in a config like:
+- Only search on fields `username` and `email`
+- You can sort on any fields, but if not, it will sort on `id` decreasing
+
+```go title="handlers/user.go"
+func (h *Handler) GetUser(c echo.Context) error {
+	searchFields := []string{"username", "email"}
+	query := c.QueryParam("search")
+	take := misc.GetQueryParamInt(c, "take", 10)
+	skip := misc.GetQueryParamInt(c, "skip", 0)
+	sortBy := misc.GetQueryParamString(c, "sort")
+	order := misc.GetQueryParamDirection(c, "order", "asc")
+
+	find := misc.FilterSortRequest{
+		FilterRequest: misc.FilterRequest{
+			Take:   take,
+			Skip:   skip,
+			Search: query,
+		},
+		SortBy: sortBy,
+		Order:  order,
+	}
+
+	config := misc.DatabaseFilterConfig{
+		AllowedSearch: searchFields,
+		DefaultSort:   "id DESC",
+	}
+
+	users, e := h.userStore.FindMany(find, config)
+
+	if e != nil {
+		return c.JSON(http.StatusInternalServerError, misc.NewError(e))
+	}
+	count, e := h.userStore.Count(find)
+	if e != nil {
+		return c.JSON(http.StatusInternalServerError, misc.NewError(e))
+	}
+
+	return c.JSON(http.StatusOK, users)
+}
+```
+### Structure pagination response
+The response is a whole object of user. Which is includes user's `password` and `otp codes` which is not so great. More ever, we also have a response pagination struct. Let user that
+```go title="handlers/user.go"
+func (h *Handler) GetUser(c echo.Context) error {
+	// ...codes
+	jsonUser := []dtos.UserRawResponse{}   // [!code ++]
+
+	for _, user := range users {
+		jsonUser = append(jsonUser, *dtos.NewRawUserReponse(user)) // [!code --]
+	}
+	meta := misc.ListResponse{
+		Data: jsonUser,
+		Meta: misc.MetaResponse{
+			Total: count, NextCursor: "",
+		},
+	}
+
+	return c.JSON(http.StatusOK, meta)
+}
+```
+
+and we got every nice response
+
+```json
+{
+  "data": [
+    {
+      "id": 4,
+      "email": "admin",
+      "username": "admin",
+      "full_name": "Admin User",
+      "roles": null,
+      "image": null
+    },
+    {
+      "id": 3,
+      "email": "example",
+      "username": "example",
+      "full_name": "Example User",
+      "roles": null,
+      "image": null
+    },
+    {
+      "id": 2,
+      "email": "example",
+      "username": "example",
+      "full_name": "Example User",
+      "roles": null,
+      "image": null
+    },
+    {
+      "id": 1,
+      "email": "example",
+      "username": "example",
+      "full_name": "Example User",
+      "roles": null,
+      "image": null
+    }
+  ],
+  "meta": {
+    "total": 4,
+    "next_cursor": ""
+  }
+}
+```
+
+## Populate
+From the above code, we do have a good response to throw back to Front end to do stuff. But wait, how about permission and role manager ? It cannot be done if response return null right ? And I do remember i have connect them using relations.
+
+### Relations in GORM
+Let take a look at my relation of role and permission. 
+
+- A Role should have many Permission 
+- A Permissions can be assign to many Role 
+
+=> Permissions and Role is Many to Many relations
+
+```go title="models/role.go"
+type Role struct {
+	gorm.Model
+	Name        string         `gorm:"unique_index"`
+	Description sql.NullString `gorm:"type:text"`
+	IsActive    bool           `gorm:"default:true"`
+	Permissions []Permission   `gorm:"many2many:role_permissions;"`
+	Users       []User         `gorm:"many2many:user_roles;"`
+}
+
+type Permission struct {
+	gorm.Model
+	Description sql.NullString `gorm:"type:text"`
+	Action      string         `gorm:"type:text"`
+	Entity      string         `gorm:"type:text"`
+	Access      string         `gorm:"type:text;check:access IN ('own', 'any')"`
+
+	Roles []Role `gorm:"many2many:role_permissions;"`
+}
+```
+
+Same as <strong>User</strong> and <strong>Role</strong> relation
+
+- A User can have many Role 
+- A Role can be assign to many User
+
+=> <strong>User</strong> and <strong>Role</strong> have <strong>Many to Many</strong> relation
+
+```go title="models/user.go"
+type User struct {
+	gorm.Model
+	// ... other props
+
+	Roles []Role `gorm:"many2many:user_roles;"`
+}
+```
+
+### Query Populate
+Now, at get all user, we need to populate user' roles. How to do that ? I don't know either 🥲. But the [docs.](https://gorm.io/docs/query.html#Joins) will help us.
+
+As the docs tell we have 2 options:
+1. Preload
+2. Joins
+
+I know Joins, it is a basic SQL query that combine 2 table with a condition. But preload it is new. It is a method that eager loading relation. Therefore preload will generate another SQL query to "SELECT". For example:
+
+```go
+type User struct {
+  gorm.Model
+  Username string
+  Orders   []Order
+}
+
+type Order struct {
+  gorm.Model
+  UserID uint
+  Price  float64
+}
+
+// Preload Orders when find users
+db.Preload("Orders").Find(&users)
+// SELECT * FROM users;
+// SELECT * FROM orders WHERE user_id IN (1,2,3,4);
+```
+
+Preload seem a bit performance issues when it need to perform 2 query in a row. But I think it bring simplicity and readability to the code. 
+
+For more overall looking, you need to consider when and how to use it:
+
+ |Preload|Join|
+ |---|---|
+ |Simplicity and readability|Performance for specific query|
+ |Avoid N+1 query|Filtering on joined fields|
+ |Batch operations|Aggregation needs|
+ 
+For my situation I don't need any filter or aggregation, so preload seem good. Let get code!
+
+```go title="stores/user.go"
+err := query.Preload("Roles.Permissions").Find(&users).Error
+```
+## Cursor pagination
+There only 1 thing left to do is `nextCursor`. And for those who don't know, my implementations is called: Cursor-based pagination (aka keyset pagination) is a [common](https://slack.engineering/evolving-api-pagination-at-slack-1c1f644f8e12) [pagination strategy](https://www.citusdata.com/blog/2016/03/30/five-ways-to-paginate/) that avoids many of the pitfalls of “offset–limit” pagination.
+
+>For example, with offset–limit pagination, if an item from a prior page is deleted while the client is paginating, all subsequent results will be shifted forward by one. Therefore, when the client requests the next page, there’s one result that it will skip over and never see. Conversely, if a result is added to the list of results as the client is paginating, the client may see the same result multiple times, on different pages. Cursor-based pagination can prevent both of these possibilities.
+
+First thing, create a helper that provides a robust and efficient way to generate the next cursor for pagination in your API, ensuring that the generated cursor is always valid and avoids potential issues with negative or invalid values.
+```go title="misc/request.go"
+// Generates the next cursor for pagination. Returns an empty string if there are no more records to fetch.
+func GenerateNextCursor(path string, take, skip int, count int64) string {
+	total := int(count)
+
+	if total <= take {
+		return ""
+	}
+
+	// Ensure skip and take are within valid ranges
+	skip = max(0, skip)
+	take = max(1, take)
+
+	// Calculate the new skip value
+	newSkip := skip + take
+
+	// Check if the new skip value exceeds the total
+	if newSkip > total {
+		return ""
+	}
+
+	return path + "?take=" + strconv.Itoa(take) + "&skip=" + strconv.Itoa(newSkip)
+}
+```
+
+This function is safely error handling, and skip value validation:
+- If the calculated `newSkip` value exceeds the total. If so, it returns an empty string indicating that there are no more items to fetch.
+- Prevent potential panics if take or skip are negative. It ensures that skip is always non-negative and take is always at least 1.
+Implement it on my handler user api:
+```go title="handles/user.go"
+func (h *Handler) GetUser(c echo.Context) error {
+	//...codes
+	jsonUser := []dtos.UserRawResponse{}
+	nextCursor := misc.GenerateNextCursor(c.Request().URL.Path, take, skip, count)
+
+	for _, user := range users {
+		jsonUser = append(jsonUser, *dtos.NewRawUserReponse(user))
+	}
+
+	meta := misc.ListResponse{
+		Data: jsonUser,
+		Meta: misc.MetaResponse{
+			Total: count, NextCursor: nextCursor,
+		},
+	}
+
+	return c.JSON(http.StatusOK, meta)
+}
+```
+
+And now we have a beautiful finally response 🌟🌟 
+
+```json
+{
+  "data": [
+    {
+      "id": 4,
+      "email": "admin",
+      "username": "admin",
+      "full_name": "Admin User",
+      "roles": [
+        {
+          "id": 8,
+          "name": "admin",
+          "permissions": [
+            "own:user:create",
+          ]
+        }
+      ],
+      "image": null
+    }
+  ],
+  "meta": {
+    "total": 4,
+    "next_cursor": "/api/user?take=1&skip=1"
+  }
+}
+```

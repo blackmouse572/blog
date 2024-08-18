@@ -1,0 +1,119 @@
+---
+import Badge from '@components/ui/badge';
+import type { CollectionEntry } from 'astro:content';
+import BaseHead from '../components/BaseHead.astro';
+import Footer from '../components/Footer.astro';
+import FormattedDate from '../components/FormattedDate.astro';
+import Header from '../components/Header.astro';
+
+import TOC from '@components/TOC';
+import type { HeadingHierarchy } from '@components/TOCHeading';
+import { Caption } from '@components/typo/caption';
+import Button from '@components/ui/button';
+import '@fontsource/geist-mono';
+import '@fontsource/geist-sans';
+import '@styles/content.css';
+import '@styles/global.css';
+import { IconArrowLeft } from '@tabler/icons-react';
+import type { MarkdownHeading } from 'astro';
+import { Image } from 'astro:assets';
+
+type Props = CollectionEntry<'blog'>['data'] & {
+  headings?: MarkdownHeading[];
+};
+
+const { title, description, pubDate, updatedDate, heroImage, headings, related, tags } = Astro.props;
+
+function createHeadingHierarchy(headings: MarkdownHeading[]) {
+  const topLevelHeadings: HeadingHierarchy[] = [];
+
+  headings.forEach((heading) => {
+    if (heading.depth > 5) {
+      throw Error(`Depths greater than 5 not allowed:\n${JSON.stringify(heading, null, 2)}`);
+    }
+    const h = {
+      ...heading,
+      subheadings: [],
+    };
+
+    if (h.depth === 2) {
+      topLevelHeadings.push(h);
+    } else {
+      let parent = topLevelHeadings[topLevelHeadings.length - 1];
+      if (parent) {
+        parent.subheadings.push(h);
+      }
+    }
+  });
+
+  return topLevelHeadings;
+}
+const toc: HeadingHierarchy[] = createHeadingHierarchy(headings ?? []);
+const hasToC = toc.length > 1;
+const base = Astro.url.pathname.split('/')[1];
+---
+
+<html lang="en">
+  <head>
+    <BaseHead title={title} description={description} />
+  </head>
+
+  <body
+    class="bg-white relative dark:bg-gray-925 lg:dark:bg-gray-900 font-sans antialiased leading-normal [--btn-radius:theme(borderRadius.lg)] dark:[--ui-border-color:theme(colors.gray.800)] selection:bg-info-600 selection:text-white dark:selection:bg-info-900 dark:selection:text-info-200 lg:before:fixed lg:before:inset-0 lg:before:-z-40 lg:dark:before:[background-image:url('/grainy-bg.svg')] lg:dark:before:opacity-[.015] prose-code:tracking-wider prose-code:font-normal"
+  >
+    <Header />
+    <main class="mx-auto container max-w-screen-lg">
+      <TOC client:load toc={toc} />
+      <article
+        class={`prose prose-lg mx-auto px-4 py-10 dark:prose-invert sm:prose-lg lg:prose-xl
+            prose-h1:font-vidaloka prose-code:before:hidden
+            prose-code:after:hidden sm:py-20 prose-img:rounded-lg prose-pre:py-0
+            ${hasToC ? 'lg:col-span-3' : ''}
+            `}
+      >
+        <Button.Root href={`/${base}`} className="w-fit" variant="ghost">
+          <Button.Icon>
+            <IconArrowLeft size={16} />
+          </Button.Icon>
+          <Button.Label>
+            Back to {base}
+          </Button.Label>
+        </Button.Root>
+        <div class="hero-image">
+          {heroImage && <Image width={1020} height={510} src={heroImage} alt="" loading="lazy" />}
+        </div>
+        <section class="flex flex-wrap gap-1 mb-2">
+          {
+            tags?.map((tag) => (
+              <a href={`/${base}?tag=${tag}`} class="no-underline">
+                <Badge intent="accent" variant="soft">
+                  # {tag}
+                </Badge>
+              </a>
+            ))
+          }
+        </section>
+        <div class="title">
+          <div class="date">
+            <div class="flex items-center gap-2 justify-between">
+              <FormattedDate date={pubDate} />
+              <slot name="subtitle" />
+            </div>
+
+            {
+              updatedDate && (
+                <Caption>
+                  Last updated on <FormattedDate date={updatedDate} />
+                </Caption>
+              )
+            }
+          </div>
+          <h1>{title}</h1>
+          <hr />
+        </div>
+        <slot name="content" />
+      </article>
+    </main>
+    <Footer />
+  </body>
+</html>

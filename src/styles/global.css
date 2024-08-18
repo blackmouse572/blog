@@ -1,0 +1,133 @@
+/*
+  The CSS in this style tag is based off of Bear Blog's default CSS.
+  https://github.com/HermanMartinus/bearblog/blob/297026a877bc2ab2b3bdfbd6b9f7961c350917dd/templates/styles/blog/default.css
+  License MIT: https://github.com/HermanMartinus/bearblog/blob/master/LICENSE.md
+ */
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --gray-light: hsl(38, 22%, 90%);
+    --gray-dark: 34, 41, 57;
+    --card-padding: theme('spacing[6]');
+    --accordion-padding: theme('spacing[4]');
+    --feedback-padding: var(--card-padding);
+    --toast-padding: theme('spacing[4]');
+    --display-text-color: theme(colors.gray.950);
+    --title-text-color: var(--display-text-color);
+    --caption-text-color: theme(colors.gray.500);
+    --body-text-color: theme(colors.gray.700);
+    --placeholder-text-color: theme(colors.gray.400);
+    --gray-gradient: rgba(var(--gray-light), 50%), #fff;
+    --accent: hsl(355, 57%, 48%);
+    --accent-dark: #000d8a;
+    --black: 15, 18, 25;
+    --gray: 96, 115, 159;
+    --box-shadow: 0 2px 6px rgba(var(--gray), 25%), 0 8px 24px rgba(var(--gray), 33%),
+      0 16px 32px rgba(var(--gray), 33%);
+    --highlight-bg: linear-gradient(
+        104deg,
+        rgba(255, 130, 130, 0) 0.9%,
+        #ff8282 2.4%,
+        rgba(255, 130, 130, 0.5) 5.8%,
+        rgba(255, 130, 130, 0.1) 93%,
+        rgba(255, 130, 130, 0.7) 96%
+      ),
+      linear-gradient(183deg, rgba(130, 255, 173, 0), rgba(255, 107, 152, 0.3) 7.9%, rgba(255, 130, 130, 0) 15%);
+    --highlight-shadow: -12px 12px 9.8px rgba(255, 130, 130, 0.7), 21px -18.1px 7.3px #fff, -18.1px -27.3px 30px #fff;
+    --highlight-text-color: rgba(var(--display-text-color), 0.8);
+  }
+  .dark {
+    --display-text-color: theme(colors.white) !important;
+    --title-text-color: var(--display-text-color) !important;
+    --caption-text-color: theme(colors.gray.500) !important;
+    --body-text-color: theme(colors.gray.300) !important;
+    --placeholder-text-color: theme(colors.gray.600) !important;
+    --ui-soft-bg: theme(colors.gray.700) !important;
+    --ui-bg: theme(colors.gray.800) !important;
+    --ui-border-color: theme(colors.gray.700) !important;
+    --input-bg: theme(colors.gray.700) !important;
+    --input-border-color: theme(colors.gray.600) !important;
+    --gray-gradient: rgba(var(--gray-dark), 50%), #000 !important;
+    --overlay-bg: rgb(var(--colors-gray-950) / 0.5) !important;
+    --ui-bg: rgb(var(--colors-gray-900) / 1) !important;
+    --ui-fancy-bg: rgb(var(--colors-gray-950) / 1) !important;
+    --display-text-color: #fff !important;
+    --dv-neutral: #fff !important;
+    --placeholder-text-color: rgb(var(--colors-gray-600) / 1) !important;
+    --title-text-color: #fff !important;
+    --highlight-bg: linear-gradient(
+        104deg,
+        rgba(255, 130, 130, 0) 0.9%,
+        #ff8282 2.4%,
+        rgba(255, 130, 130, 0.5) 5.8%,
+        rgba(255, 130, 130, 0.1) 93%,
+        rgba(255, 130, 130, 0.7) 96%
+      ),
+      linear-gradient(183deg, rgba(130, 255, 173, 0), rgba(255, 107, 152, 0.3) 7.9%, rgba(255, 130, 130, 0) 15%) !important;
+
+    --highlight-shadow: -12px 12px 9.8px rgb(243 165 165 / 70%), 0px -4.1px 7.3px #fff, -36.1px -42.3px 30px #edcbcb !important;
+    /* --highlight-text-color: var(--gray-light) !important; */
+  }
+
+  /* SCROLL HANDLE */
+  ::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    @apply bg-primary-600 rounded-full bg-opacity-50 hover:bg-opacity-100 dark:bg-primary-500 transition-all duration-[10000ms];
+  }
+}
+
+.toc-post {
+  display: none;
+}
+
+body {
+  margin: 0;
+  padding: 0;
+  text-align: left;
+  background-size: 100% 600px;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+  line-height: 1.5;
+}
+mark {
+  font-weight: bolder;
+  background: var(--highlight-bg);
+  padding: 0.25em 0.4rem;
+  -webkit-box-decoration-break: clone;
+  margin: 0;
+  border-radius: 7.5px;
+  text-shadow: var(--highlight-shadow);
+  color: var(--highlight-text-color);
+}
+pre,
+code,
+kbd,
+samp {
+  font-family: 'Geist Mono', 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, Courier, monospace;
+  font-size: 0.9em;
+}
+
+.sr-only {
+  border: 0;
+  padding: 0;
+  margin: 0;
+  position: absolute !important;
+  height: 1px;
+  width: 1px;
+  overflow: hidden;
+  /* IE6, IE7 - a 0 height clip, off to the bottom right of the visible 1px box */
+  clip: rect(1px 1px 1px 1px);
+  /* maybe deprecated but we need to support legacy browsers */
+  clip: rect(1px, 1px, 1px, 1px);
+  /* modern browsers, clip-path works inwards from each corner */
+  clip-path: inset(50%);
+  /* added line to stop words getting smushed together (as they go onto separate lines and some screen readers do not understand line feeds as a space */
+  white-space: nowrap;
+}

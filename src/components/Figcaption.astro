@@ -1,0 +1,17 @@
+---
+import { FileIcon } from '@components/file-icon';
+import { Text } from '@components/typo/text';
+
+const props = Astro.props;
+const lang = props['data-language'] || 'plaintext';
+const filename = props['data-filename'];
+---
+
+<figcaption
+  class="!rounded-t-md flex gap-2 items-center bg-primary-500 dark:bg-primary-800 text-accent-50 dark:text-primary-400 px-2 py-1.5"
+>
+  <FileIcon ext={lang} />
+  <Text className="text-white dark:text-primary-200 py-0 !my-0">
+    <slot />
+  </Text>
+</figcaption>

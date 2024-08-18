@@ -1,0 +1,9 @@
+---
+import '@fontsource/geist-mono';
+import '@fontsource/geist-sans';
+const props = Astro.props;
+---
+
+<main class:list={[props.class, 'container mx-auto h-full']} {...props}>
+  <slot />
+</main>

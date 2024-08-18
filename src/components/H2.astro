@@ -1,0 +1,6 @@
+---
+import { Title } from './typo/title';
+const props = Astro.props;
+---
+
+<Title as="h2" size="2xl" {...props}><slot /></Title>

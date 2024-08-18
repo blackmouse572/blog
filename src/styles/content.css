@@ -1,0 +1,125 @@
+@tailwind base;
+figure > pre > code {
+  border: none;
+  background-color: transparent;
+}
+figure > pre {
+  overflow: visible;
+}
+span[data-line] {
+  position: relative;
+  display: inline-block;
+  width: 100%;
+  @apply py-1.5;
+}
+span[data-line][data-highlighted-line]::after {
+  /* @apply bg-primary-200/60; */
+  content: '';
+  display: block;
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  @apply bg-primary-500/20 border-l-4 border-primary-500;
+}
+code {
+  counter-reset: line;
+}
+
+pre > code {
+  display: block;
+  position: relative;
+  background: transparent !important;
+}
+
+code > [data-line]::before {
+  counter-increment: line;
+  content: counter(line);
+
+  /* Other styling */
+  display: inline-block;
+  width: 1.5rem;
+  margin-right: 1rem;
+  text-align: right;
+  @apply text-gray-700/20;
+}
+
+html.dark code > [data-line]::before {
+  @apply text-gray-200/20;
+}
+
+code[data-line-numbers-max-digits='2'] > [data-line]::before {
+  width: 2rem;
+}
+
+code[data-line-numbers-max-digits='3'] > [data-line]::before {
+  width: 3rem;
+}
+
+pre[data-theme*='catppuccin-mocha'],
+pre[data-theme*='catppuccin-mocha'] span {
+  color: var(--shiki-light);
+  background-color: var(--shiki-light-bg);
+  text-wrap: pretty;
+  word-break: break-word;
+  white-space: pre-wrap;
+  letter-spacing: normal;
+}
+
+pre[data-theme*='catppuccin-mocha'] span.diff.add::after {
+  content: '+';
+  display: flex;
+  align-items: center;
+  height: 100%;
+  position: absolute;
+  right: 0;
+  top: 0;
+  inset: 0;
+  z-index: 2;
+  padding-inline-start: 0.25rem;
+  @apply dark:bg-green-500/20 dark:text-success-500 text-lg bg-green-400/20 text-success-500;
+}
+
+pre[data-theme*='catppuccin-mocha'] span.diff.remove::after {
+  content: '-';
+  display: flex;
+  align-items: center;
+  height: 100%;
+  position: absolute;
+  right: 0;
+  top: 0;
+  inset: 0;
+  z-index: 2;
+  padding-inline-start: 0.25rem;
+  @apply dark:bg-danger-500/20 dark:text-danger-500 text-lg bg-danger-400/20 text-danger-500;
+}
+
+pre[data-theme*='catppuccin-mocha'] {
+  background-color: var(--shiki-light-bg);
+}
+
+html.dark pre[data-theme*='catppuccin-mocha'] {
+  background-color: var(--shiki-dark-bg);
+}
+
+html.dark pre[data-theme*='catppuccin-mocha'] span {
+  color: var(--shiki-dark);
+  background-color: var(--shiki-dark-bg);
+}
+
+.task-list-item {
+  display: flex;
+  align-items: center;
+  margin-bottom: 0.5rem;
+  gap: 0.5rem;
+  padding-inline-start: 0;
+}
+
+aside.toc::-webkit-scrollbar {
+  width: 0.275rem;
+}
+
+pre button.rehype-pretty-copy {
+  top: 0;
+}

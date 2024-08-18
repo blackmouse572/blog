@@ -1,0 +1,69 @@
+---
+export const prerender = true;
+
+import A from '@components/A.astro';
+import Code from '@components/Code.astro';
+import Figcaption from '@components/Figcaption.astro';
+import Figure from '@components/Figure.astro';
+import TitleMDX from '@components/H2.astro';
+import H3 from '@components/H3.astro';
+import Input from '@components/Input.astro';
+import Italic from '@components/Italic.astro';
+import Kbd from '@components/KBD.astro';
+import Ol from '@components/Ol.astro';
+import Paragraph from '@components/Paragraph.astro';
+import Pre from '@components/Pre.astro';
+import Strong from '@components/Strong.astro';
+import { Link } from '@components/typo/link';
+import Ul from '@components/Ul.astro';
+import { IconLink } from '@tabler/icons-react';
+import { type CollectionEntry, getCollection } from 'astro:content';
+import BlogPost from '../../layouts/BlogPost.astro';
+
+export async function getStaticPaths() {
+  const projects = await getCollection('project');
+  const headings = await Promise.all(projects.map((entry) => entry.render().then((data) => data.headings)));
+  return projects.map((post) => ({
+    params: { slug: post.slug },
+    props: {
+      headings: headings[projects.indexOf(post)],
+      ...post,
+    },
+  }));
+}
+type Props = CollectionEntry<'project'> & {
+  headings: any[];
+};
+
+const { headings, ...post } = Astro.props;
+const { Content } = await post.render();
+---
+
+<BlogPost {...post.data} headings={headings}>
+  {
+    post.data.href && (
+      <Link slot="subtitle" href={post.data.href} intent={'gray'} className="flex items-center gap-2">
+        <IconLink size={16} strokeWidth={1.5} /> Website
+      </Link>
+    )
+  }
+  <Content
+    slot="content"
+    components={{
+      h2: TitleMDX,
+      h3: H3,
+      kbd: Kbd,
+      code: Code,
+      p: Paragraph,
+      a: A,
+      strong: Strong,
+      italic: Italic,
+      input: Input,
+      ul: Ul,
+      ol: Ol,
+      figure: Figure,
+      pre: Pre,
+      figcaption: Figcaption,
+    }}
+  />
+</BlogPost>

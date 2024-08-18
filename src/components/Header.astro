@@ -1,0 +1,20 @@
+---
+import { ModeToggle } from '@components/ModeToggle';
+import { Title } from '@components/typo/title';
+import Button from '@components/ui/button';
+import { SITE_TITLE } from '../consts';
+import HeaderLink from './HeaderLink.astro';
+---
+
+<header>
+  <nav class="flex justify-between items-center py-5 px-3 backdrop:blur-sm">
+    <Title as="h2"><a href="/">{SITE_TITLE}</a></Title>
+    <div class="flex gap-4">
+      <HeaderLink href="/"><Button.Label> Home </Button.Label> </HeaderLink>
+      <HeaderLink href="/blog"><Button.Label> Blog </Button.Label> </HeaderLink>
+      <HeaderLink href="/project"><Button.Label> Project </Button.Label> </HeaderLink>
+      <HeaderLink href="/about"><Button.Label> About </Button.Label> </HeaderLink>
+    </div>
+    <ModeToggle client:load />
+  </nav>
+</header>

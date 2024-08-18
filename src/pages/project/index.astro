@@ -1,0 +1,120 @@
+---
+export const prerender = true;
+import { getCollection } from 'astro:content';
+import BaseHead from '../../components/BaseHead.astro';
+import Footer from '../../components/Footer.astro';
+import { SITE_DESCRIPTION, SITE_TITLE } from '../../consts';
+
+import FormattedDate from '@components/FormattedDate.astro';
+import Header from '@components/Header.astro';
+import { Text } from '@components/typo/text';
+import { Title } from '@components/typo/title';
+import '@fontsource/geist-mono';
+import '@fontsource/geist-sans';
+import MainLayout from '@layouts/MainLayout.astro';
+
+const project = (await getCollection('project')).sort((a, b) => b.data.pubDate.valueOf() - a.data.pubDate.valueOf());
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <BaseHead title={SITE_TITLE} description={SITE_DESCRIPTION} />
+    <style>
+      ul {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 2rem;
+        list-style-type: none;
+        margin: 0;
+        padding: 0;
+      }
+      ul li {
+        width: calc(50% - 1rem);
+      }
+      ul li * {
+        text-decoration: none;
+        transition: 0.2s ease;
+      }
+      ul li:first-child {
+        width: 100%;
+        margin-bottom: 1rem;
+        text-align: center;
+      }
+      ul li:first-child img {
+        width: 100%;
+      }
+      ul li:first-child .title {
+        font-size: 2.369rem;
+      }
+      ul li img {
+        margin-bottom: 0.5rem;
+        border-radius: 12px;
+      }
+      ul li a {
+        display: block;
+      }
+      .title {
+        margin: 0;
+        color: rgb(var(--black));
+        line-height: 1;
+      }
+      .date {
+        margin: 0;
+        color: rgb(var(--gray));
+      }
+
+      ul a:hover img {
+        box-shadow: var(--box-shadow);
+      }
+      @media (max-width: 720px) {
+        ul {
+          gap: 0.5em;
+        }
+        ul li {
+          width: 100%;
+          text-align: center;
+        }
+        ul li:first-child {
+          margin-bottom: 0;
+        }
+        ul li:first-child .title {
+          font-size: 1.563em;
+        }
+      }
+    </style>
+  </head>
+  <body
+    class="bg-white relative dark:bg-gray-925 lg:dark:bg-gray-900 font-sans antialiased leading-normal [--btn-radius:theme(borderRadius.lg)] dark:[--ui-border-color:theme(colors.gray.800)] selection:bg-info-600 selection:text-white dark:selection:bg-info-900 dark:selection:text-info-200 lg:before:fixed lg:before:inset-0 lg:before:-z-40 lg:dark:before:[background-image:url('/grainy-bg.svg')] lg:dark:before:opacity-[.015]"
+  >
+    <Header />
+    <main>
+      <MainLayout>
+        <section class="max-w-3xl mx-auto mt-36 mb-32">
+          <ul>
+            {
+              project.map((post) => (
+                <li>
+                  <a href={`/project/${post.slug}/`} class="group">
+                    <img width={720} height={360} src={post.data.heroImage} alt="" />
+                    <Title as="h4">{post.data.title}</Title>
+                    <Text>
+                      <FormattedDate date={post.data.pubDate} />
+                      {post.data.endDate && (
+                        <>
+                          {' - '}
+                          <FormattedDate date={post.data.endDate} />
+                        </>
+                      )}
+                    </Text>
+                  </a>
+                </li>
+              ))
+            }
+          </ul>
+        </section>
+      </MainLayout>
+    </main>
+    <Footer />
+  </body>
+</html>

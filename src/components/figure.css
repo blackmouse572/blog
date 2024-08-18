@@ -1,0 +1,6 @@
+/* If figure has figcation, hide header */
+figure:has(figcaption) {
+  header {
+    display: none !important;
+  }
+}

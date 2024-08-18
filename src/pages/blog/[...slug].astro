@@ -1,0 +1,60 @@
+---
+export const prerender = true;
+
+import A from '@components/A.astro';
+import Code from '@components/Code.astro';
+import Figcaption from '@components/Figcaption.astro';
+import Figure from '@components/Figure.astro';
+import TitleMDX from '@components/H2.astro';
+import H3 from '@components/H3.astro';
+import Input from '@components/Input.astro';
+import Italic from '@components/Italic.astro';
+import Kbd from '@components/KBD.astro';
+import Ol from '@components/Ol.astro';
+import Paragraph from '@components/Paragraph.astro';
+import Pre from '@components/Pre.astro';
+import Strong from '@components/Strong.astro';
+import Ul from '@components/Ul.astro';
+import { type CollectionEntry, getCollection } from 'astro:content';
+import BlogPost from '../../layouts/BlogPost.astro';
+
+export async function getStaticPaths() {
+  const posts = await getCollection('blog');
+  const headings = await Promise.all(posts.map((entry) => entry.render().then((data) => data.headings)));
+  return posts.map((post) => ({
+    params: { slug: post.slug },
+    props: {
+      headings: headings[posts.indexOf(post)],
+      ...post,
+    },
+  }));
+}
+type Props = CollectionEntry<'blog'> & {
+  headings: any[];
+};
+
+const { headings, ...post } = Astro.props;
+const { Content } = await post.render();
+---
+
+<BlogPost {...post.data} headings={headings}>
+  <Content
+    slot="content"
+    components={{
+      h2: TitleMDX,
+      h3: H3,
+      kbd: Kbd,
+      code: Code,
+      p: Paragraph,
+      a: A,
+      strong: Strong,
+      italic: Italic,
+      input: Input,
+      ul: Ul,
+      ol: Ol,
+      figure: Figure,
+      pre: Pre,
+      figcaption: Figcaption,
+    }}
+  />
+</BlogPost>

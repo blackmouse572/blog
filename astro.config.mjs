@@ -21,8 +21,6 @@ const options = {
       visibility: 'hover',
       feedbackDuration: 2_500,
     }),
-    // transformerNotationFocus(),
-    // transformerMetaHighlight(),
   ],
   theme: {
     dark: 'catppuccin-mocha',
@@ -31,14 +29,8 @@ const options = {
 };
 // https://astro.build/config
 export default defineConfig({
-  site: 'https://example.com',
+  site: 'https://blog-gilt-tau-28.vercel.app/',
   integrations: [mdx(), sitemap(), tailwind(), react()],
-  redirects: {
-    '/': {
-      status: 302,
-      destination: '/blog',
-    },
-  },
   markdown: {
     syntaxHighlight: false,
     rehypePlugins: [

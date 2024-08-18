@@ -4,6 +4,6 @@ import '@fontsource/geist-sans';
 const props = Astro.props;
 ---
 
-<main class:list={[props.class, 'container mx-auto h-full']} {...props}>
+<main class:list={[props.class, 'container mx-auto h-full min-h-[80vh]']} {...props}>
   <slot />
 </main>

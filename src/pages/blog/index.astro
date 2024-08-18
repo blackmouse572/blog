@@ -11,6 +11,7 @@ import { Title } from '@components/typo/title';
 import '@fontsource/geist-mono';
 import '@fontsource/geist-sans';
 import MainLayout from '@layouts/MainLayout.astro';
+import { Image } from 'astro:assets';
 const tag = Astro.url.searchParams.get('tag');
 const posts = (await getCollection('blog'))
   .sort((a, b) => b.data.pubDate.valueOf() - a.data.pubDate.valueOf())
@@ -89,7 +90,7 @@ const preferences = Astro.cookies.get('preferences')?.json() || {
     </style>
   </head>
   <body
-    class="bg-white relative dark:bg-gray-925 lg:dark:bg-gray-900 font-sans antialiased leading-normal [--btn-radius:theme(borderRadius.lg)] dark:[--ui-border-color:theme(colors.gray.800)] selection:bg-info-600 selection:text-white dark:selection:bg-info-900 dark:selection:text-info-200 lg:before:fixed lg:before:inset-0 lg:before:-z-40 lg:dark:before:[background-image:url('/grainy-bg.svg')] lg:dark:before:opacity-[.015]"
+    class="bg-white relative dark:bg-gray-925 lg:dark:bg-gray-900 font-sans antialiased leading-normal [--btn-radius:theme(borderRadius.lg)] dark:[--ui-border-color:theme(colors.gray.800)] selection:bg-info-600 selection:text-white dark:selection:bg-info-900 dark:selection:text-info-200 lg:before:fixed lg:before:inset-0 lg:before:-z-40 lg:dark:before:[background-image:url('/grainy-bg.svg')] lg:dark:before:opacity-[.015] min-h-screen"
   >
     <Header />
     <MainLayout>
@@ -99,7 +100,7 @@ const preferences = Astro.cookies.get('preferences')?.json() || {
             posts.map((post) => (
               <li>
                 <a href={`/blog/${post.slug}/`} class="group">
-                  <img width={720} height={360} src={post.data.heroImage} alt="" />
+                  <Image width={720} height={360} src={post.data.heroImage ?? '/blog-placeholder-4'} alt="" />
                   <Title as="h4">{post.data.title}</Title>
                   <Text>
                     <FormattedDate date={post.data.pubDate} />

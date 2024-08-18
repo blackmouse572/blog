@@ -65,7 +65,7 @@ function TOC({ toc }: Props) {
   }, []);
 
   return (
-    <aside className="toc hidden lg:block prose mx-auto px-4 dark:prose-invert xl:pt-10 2xl:px-0 fixed top-1/2 left-10 -translate-y-1/2 max-h-[32vh] overflow-y-auto">
+    <aside className="toc hidden lg:block prose mx-auto px-4 dark:prose-invert xl:pt-10 2xl:px-0 fixed top-1/2 left-10 -translate-y-1/2 max-h-[500px] overflow-y-auto">
       <ul className="">
         {toc.map((heading) => (
           <TOCHeading key={heading.slug} heading={heading} />

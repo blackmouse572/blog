@@ -59,7 +59,11 @@ const base = Astro.url.pathname.split('/')[1];
   </head>
 
   <body
-    class="bg-white relative dark:bg-gray-925 lg:dark:bg-gray-900 font-sans antialiased leading-normal [--btn-radius:theme(borderRadius.lg)] dark:[--ui-border-color:theme(colors.gray.800)] selection:bg-info-600 selection:text-white dark:selection:bg-info-900 dark:selection:text-info-200 lg:before:fixed lg:before:inset-0 lg:before:-z-40 lg:dark:before:[background-image:url('/grainy-bg.svg')] lg:dark:before:opacity-[.015] prose-code:tracking-wider prose-code:font-normal"
+    class:list={[
+      "bg-white relative dark:bg-gray-925 lg:dark:bg-gray-900 font-sans antialiased leading-normal [--btn-radius:theme(borderRadius.lg)] dark:[--ui-border-color:theme(colors.gray.800)] selection:bg-info-600 selection:text-white dark:selection:bg-info-900 dark:selection:text-info-200 lg:before:fixed lg:before:inset-0 lg:before:-z-40 lg:dark:before:[background-image:url('/grainy-bg.svg')] lg:dark:before:opacity-[.015]",
+      'prose-code:tracking-wider prose-code:font-normal',
+      'prose-td:text-sm prose-thead:font-medium prose-thead:font-vidaloka prose-thead:tracking-wider prose-thead:border-b-[--ui-border-color] prose-tr:border-b-[--ui-border-color]',
+    ]}
   >
     <Header />
     <main class="mx-auto container max-w-screen-lg">

@@ -77,8 +77,10 @@ pre[data-theme*='catppuccin-mocha'] span.diff.add::after {
   top: 0;
   inset: 0;
   z-index: 2;
-  padding-inline-start: 0.25rem;
-  @apply dark:bg-green-500/20 dark:text-success-500 text-lg bg-green-400/20 text-success-500;
+  padding-inline-start: 1.7rem;
+  font-weight: 500;
+  font-size: smaller;
+  @apply font-sans dark:bg-green-500/20 dark:text-success-500 text-lg bg-green-400/20 text-success-500;
 }
 
 pre[data-theme*='catppuccin-mocha'] span.diff.remove::after {
@@ -91,8 +93,10 @@ pre[data-theme*='catppuccin-mocha'] span.diff.remove::after {
   top: 0;
   inset: 0;
   z-index: 2;
-  padding-inline-start: 0.25rem;
-  @apply dark:bg-danger-500/20 dark:text-danger-500 text-lg bg-danger-400/20 text-danger-500;
+  padding-inline-start: 1.7rem;
+  font-weight: 500;
+  font-size: smaller;
+  @apply font-sans dark:bg-danger-500/20 dark:text-danger-500 text-lg bg-danger-400/20 text-danger-500;
 }
 
 pre[data-theme*='catppuccin-mocha'] {

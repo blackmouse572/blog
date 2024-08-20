@@ -1,0 +1,158 @@
+---
+title: 'Many to many with Golang GORM'
+description: 'Many-to-many relationships are used when any number entities of one entity type is associated with any number of entities of the same or another entity type. For example, a Post can have many associated Tags, and each Tag can in turn be associated with any number of Posts.'
+pubDate: 'Aug 20 2024'
+heroImage: '/populate-pagination.png'
+tags: ['golang', 'gorm', 'echo', 'populate']
+---
+## What is Many to Many relation ?
+A _many-to-many relationship_ occurs when multiple records in a table are associated with multiple records in another table. For example, a many-to-many relationship exists between customers and products: customers can purchase various products, and products can be purchased by many customers.
+
+## How Many to Many display in SQL database ?
+Relational database systems usually don't allow you to implement a direct many-to-many relationship between two tables. Consider the example of keeping track of invoices. If there were many invoices with the same invoice number and one of your customers inquired about that invoice number, you wouldn't know which number they were referring to. This is one reason for assigning a unique value to each invoice.
+
+To avoid this problem, you can break the many-to-many relationship into two one-to-many relationships by using a third table, called a _join table_. Each record in a join table includes a match field that contains the value of the primary keys of the two tables it joins. (In the join table, these match fields are foreign keys.) These foreign key fields are populated with data as records in the join table are created from either table it joins.
+
+A typical example of a many-to many relationship is one between students and classes. A student can register for many classes, and a class can include many students.
+
+The following example includes a Students table, which contains a record for each student, and a Classes table, which contains a record for each class. A join table, Enrollments, creates two one-to-many relationships—one between each of the two tables.
+
+![Many to Many Class](/images/m2m-gorm/class.png)
+
+## Defined M-M in GORM
+In this article, i will lead you how to create a many to many relation and its uses. The base setup of GORM in Go will not be talk here. But free to look at the document if you need so.
+
+### Defined model
+First, let's understand what are we gonna build
+
+<strong>Business Rule:</strong> A movies manager. User can get a movie and it will show all the actors of that movie.
+- A table of `Movie`
+- A table of `Actor`
+
+A Movie can have many Actors
+An Actor can be inside many Movies
+=> This is a many to many relation
+
+<strong>Approach:</strong> We will have a third table `filmography` to contain which Actor act in which Movie.
+
+![Many to Many Movie](/images/m2m-gorm/movie.png)
+Now, we will reflect that inside our code
+```go title="models/movie.go"
+import (
+	"database/sql"
+	"gorm.io/gorm"
+)
+
+type Movie struct {
+	gorm.Model
+	Name string
+	Description string
+	ReleaseDt time.Time
+}
+
+type Actor struct {
+	gorm.Model
+	Fullname string
+	Gender string
+}
+
+type Filmography struct {
+	gorm.Model
+	MovieID int
+	ActorID int
+}
+```
+
+And don't forget to add it on `AutoMigrate`
+
+```go title="db.go"
+// ...rest code
+err := db.AutoMigrate(
+	&models.Movie
+	&models.Actor
+	&models.Filmography
+)
+// ...rest code
+```
+
+### Get a movie at its actors
+<strong>User story:</strong> As a user, I would like a see "Avengers Infinity War" and its Actors so that I can know if Steve Roger is acted by whom
+
+So, as the story tell, we need to query the move where its name is "Avengers Infinity War", then join the actor table to return all the value of its.
+
+```go title="handlers/movie.go"
+func GetMovieActors(name string) []Actor {
+	var movie Movie
+	db.Where("name = ?", name).First(&movie)
+	var filmography []Filmography
+	db.Where("movie_id = ?", movie.ID).fint(&filmography)
+
+	var actor_ids []int
+	for _, film := range filmography {
+		actor_ids = append(actor_ids, element.ActorID)
+	}
+
+	var actors []Actor
+	db.Where("id IN ?", actor_ids).Find(&actors)
+
+	return actors
+}
+```
+
+### Refactor using GORM relations
+As the previous code has a good based, however, it bring too many boilerplate code. Luckily GORM have provided some api to make this easier and cleaner to work with
+
+Let re-defined the model
+```go title="models/movie.go"
+import (
+	"database/sql"
+	"gorm.io/gorm"
+)
+
+type Movie struct {
+	gorm.Model
+	Name string
+	Description string
+	ReleaseDt time.Time
+
+	Actors []Actor `gorm:"many2many:filmography;"` // [!code ++]
+}
+
+type Actor struct {
+	gorm.Model
+	Fullname string
+	Gender string
+}
+
+type Filmography struct { // [!code --]
+	gorm.Model // [!code --]
+	MovieID int // [!code --]
+	ActorID int // [!code --]
+} // [!code --]
+```
+
+We have add the property `Actors` for our `Movie` struct. With `gorm:"many2many:filmography;"` we let the GORM know that
+- Actor and Movie have many to many relation
+- And make a third table called filmography to hold that relation
+As the result. We no longer need `Filmography` struct as well as in AutoMigrate
+
+```go title="db.go"
+// ...rest code
+err := db.AutoMigrate(
+	&models.Movie
+	&models.Actor
+	&models.Filmography // [!code --]
+)
+// ...rest code
+```
+
+Now, let refactor the handler to apply new schema we just created
+
+```go title="handlers/movie.go"
+func GetMovieActors(name string) []Actor {
+	var movie Movie
+	db.Where("name = ?", name).Preload("Actors").First(&movie)
+
+	return movie.Actors
+}
+```

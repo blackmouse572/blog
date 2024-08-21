@@ -1,0 +1,6 @@
+---
+import ImageClientViewer from './ImageViewer';
+const props = Astro.props as { src: string; alt: string };
+---
+
+<ImageClientViewer {...props} client:load />

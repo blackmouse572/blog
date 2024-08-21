@@ -7,11 +7,15 @@ interface Props {
   title: string;
   description: string;
   image?: string;
+  tags?: string[];
 }
 
 const canonicalURL = new URL(Astro.url.pathname, Astro.site);
 
-const { title, description, image = '/blog-placeholder-1.jpg' } = Astro.props;
+const { title, tags, description, image = '/blog-placeholder-1.jpg' } = Astro.props;
+
+const keywords = tags?.join(',pnpm i react-photo-view ');
+console.log(keywords, tags);
 ---
 
 <!-- Global Metadata -->
@@ -19,6 +23,7 @@ const { title, description, image = '/blog-placeholder-1.jpg' } = Astro.props;
 <meta name="viewport" content="width=device-width,initial-scale=1" />
 <link rel="icon" type="image/svg+xml" href="/favicon.ico" />
 <meta name="generator" content={Astro.generator} />
+<meta name="robots" content="index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1" />
 
 <!-- Canonical URL -->
 <link rel="canonical" href={canonicalURL} />
@@ -28,7 +33,12 @@ const { title, description, image = '/blog-placeholder-1.jpg' } = Astro.props;
 <meta name="title" content={title} />
 <meta name="description" content={description} />
 
-<!-- Open Graph / Facebook -->
+<meta property="og:locale" content="en_US" />
+<meta property="og:type" content="article" />
+<meta property="og:keywords" content={keywords} />
+
+<!-- Open Graph Facebook -->
+
 <meta property="og:type" content="website" />
 <meta property="og:url" content={Astro.url} />
 <meta property="og:title" content={title} />

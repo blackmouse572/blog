@@ -17,6 +17,7 @@ import Strong from '@components/Strong.astro';
 import Ul from '@components/Ul.astro';
 import { type CollectionEntry, getCollection } from 'astro:content';
 import BlogPost from '../../layouts/BlogPost.astro';
+import ImageViewer from '@components/ImageViewer.astro';
 
 export async function getStaticPaths() {
   const posts = await getCollection('blog');
@@ -37,7 +38,7 @@ const { headings, ...post } = Astro.props;
 const { Content } = await post.render();
 ---
 
-<BlogPost {...post.data} headings={headings}>
+<BlogPost {...post.data} headings={headings} tags={post.data.tags}>
   <Content
     slot="content"
     components={{
@@ -55,6 +56,7 @@ const { Content } = await post.render();
       figure: Figure,
       pre: Pre,
       figcaption: Figcaption,
+      img: ImageViewer,
     }}
   />
 </BlogPost>

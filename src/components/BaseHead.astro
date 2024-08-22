@@ -14,8 +14,7 @@ const canonicalURL = new URL(Astro.url.pathname, Astro.site);
 
 const { title, tags, description, image = '/blog-placeholder-1.jpg' } = Astro.props;
 
-const keywords = tags?.join(',pnpm i react-photo-view ');
-console.log(keywords, tags);
+const keywords = tags?.join(',');
 ---
 
 <!-- Global Metadata -->

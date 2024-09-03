@@ -1,0 +1,245 @@
+---
+title: 'Leverage Confirm Dialog with React Context API'
+description: 'Dialog is a interface that interrupts the user with important content and expects a response. However, recreating the same dialog in multiple components can be a pain. In this article, we will create a Confirm Dialog using React Context API.'
+pubDate: 'Sep 03 2024'
+heroImage: '/m2m-gorm.png'
+tags: ['react', 'context-api', 'dialog']
+---
+
+## What is Confirm Dialog ?
+A _dialog_ is a interface that interrupts the user with important content and expects a response. However, recreating the same dialog in multiple components can be a pain. In this article, we will create a Confirm Dialog using React Context API.
+
+
+
+## How to create Confirm Dialog ?
+There are many ways to create a dialog in React with different UI libraries (Material-UI, Ant Design, etc). But in this article, we will use use [TailusUI](https://ui.tailus.io/react/components/alert-dialog/) as a [Radix UI](https://www.radix-ui.com/primitives/docs/components/alert-dialog#api-reference) KIT to create a dialog.
+
+Here is an example of how to create a dialog with Radix UI
+```jsx title="components/ConfirmDialog.tsx"
+import { Trash } from "lucide-react"
+import AlertDialog from "@tailus-ui/AlertDialog"
+import Button from "@tailus-ui/Button"
+
+export const Centered = () => (
+    <AlertDialog.Root>
+      <AlertDialog.Trigger asChild>
+        <Button.Root variant="soft" intent="danger">
+            <Button.Icon type="leading" size="sm">
+                <Trash />
+            </Button.Icon>
+            <Button.Label>Delete</Button.Label>
+        </Button.Root>
+      </AlertDialog.Trigger>
+      <AlertDialog.Portal>
+        <AlertDialog.Overlay />
+        <AlertDialog.Content className="max-w-sm" data-shade="800">
+            <AlertDialog.Title>
+                Are you absolutely sure?
+            </AlertDialog.Title>
+            <AlertDialog.Description className="mt-2">
+                This photo will be deleted from your iCloud Photos.
+            </AlertDialog.Description>
+            <AlertDialog.Actions>
+                <AlertDialog.Cancel asChild>
+                    <Button.Root
+                        variant="outlined"
+                        intent="gray"
+                        size="sm"
+                    >
+                        <Button.Label>Cancel</Button.Label>
+                    </Button.Root>
+                </AlertDialog.Cancel>
+                <AlertDialog.Action asChild>
+                    <Button.Root
+                        variant="solid"
+                        intent="danger"
+                        size="sm"
+                    >
+                        <Button.Label>Yes, Delete</Button.Label>
+                    </Button.Root>
+                </AlertDialog.Action>
+            </AlertDialog.Actions>
+        </AlertDialog.Content>
+      </AlertDialog.Portal>
+    </AlertDialog.Root>
+)
+
+```
+![Showcase AlertDialogDemo](/images/confirm-dialog/showcase.png)
+
+## The problem
+The above code is great for a single component. But what if we want to use the same dialog in multiple components? We will have to copy-paste the same code in every component. This is not a good practice and can lead to a lot of code duplication. I have faced this problem many times and I am sure you have too.
+
+In one time, I discovered the window have a built-in `window.confirm` function that can be used to create a confirm dialog. But it is not customizable and not a good practice to use it in a React application.
+
+```tsx title="Manual Confirm Dialog with window.confirm"
+const handleDelete = () => {
+    const isDelete = window.confirm("Are you sure you want to delete this item?")
+    if(isDelete) {
+        // delete the item
+    }
+}
+```
+
+![Showcase ConfirmDialog](/images/confirm-dialog/window-alert.png)
+
+## Solution
+After dig into the `window.confirm` function, the way it works are:
+
+1. It opens a dialog box with a message and two buttons: OK and Cancel.
+2. It is a blocking function, which means it will block the execution of the code until the user clicks on one of the buttons. (a synchronous function)
+3. It returns a boolean value: `true` if the user clicks on OK and `false` if the user clicks on Cancel.
+
+To solve this problem, we can create a Confirm Dialog using React Context API. This way, we can create a single Confirm Dialog component and use it in multiple components. Let's see how we can do this.
+
+```tsx title="components/ConfirmDialogProvider.tsx"
+import React, { createContext, useContext, useState,useCallback } from "react"
+import AlertDialog from "@tailus-ui/AlertDialog"
+
+type DialogFnProps = {
+    title: string,
+    description?: string,
+    confirmLabel?: string,
+    cancelLabel?: string,
+}
+type ConfirmDialogContextType = {
+    dialog:  (props: DialogFnProps) => void
+}
+const ConfirmDialogContext = createContext<ConfirmDialogContextType | undefined>(undefined)
+
+export const usePromt = () => {
+    const context = useContext(ConfirmDialogContext)
+    if (!context) {
+        throw new Error("usePromt must be used within a ConfirmDialogProvider")
+    }
+    return context
+}
+
+const ConfirmState = {
+    isOpen: false,
+    title: string,
+    description: string,
+    confirmLabel: string,
+    cancelLabel: string,
+}
+
+export const ConfirmDialogProvider = ({ children }) => {
+    const [state, setState] = useState<ConfirmState>({
+        isOpen: false,
+        title: "",
+        description: "",
+    })
+
+    const fnRef = useRef<(choice:boolean)=>void>()
+
+    const dialog = useCallback((props: DialogFnProps) => {
+        return new Promise((resolve) => {
+            setState({
+                ...props,
+                isOpen: true,
+            })
+            fnRef.current = (choice) => {
+                resolve(true)
+                setState(prev => ({ ...prev, isOpen: false }))
+            }
+        })
+    }, [])
+
+    return (
+        <ConfirmDialogContext.Provider value={dialog}>
+            <AlertDialog.Root open={isOpen} onClose={close}>
+                <AlertDialog.Portal>
+                    <AlertDialog.Overlay />
+                    <AlertDialog.Content className="max-w-sm" data-shade="800">
+                        <AlertDialog.Title>
+                            {title}
+                        </AlertDialog.Title>
+                        <AlertDialog.Description className="mt-2">
+                            {description}
+                        </AlertDialog.Description>
+                        <AlertDialog.Actions>
+                            <AlertDialog.Cancel asChild>
+                                <Button.Root
+                                    variant="outlined"
+                                    intent="gray"
+                                    size="sm"
+                                    onClick={() => fnRef.current(false)}
+                                >
+                                    <Button.Label>
+                                        {cancelLabel}
+                                    </Button.Label>
+                                </Button.Root>
+                            </AlertDialog.Cancel>
+                            <AlertDialog.Action asChild>
+                                <Button.Root
+                                    variant="solid"
+                                    intent="danger"
+                                    size="sm"
+                                    onClick={() => fnRef.current(true)}
+                                >
+                                    <Button.Label>
+                                        {confirmLabel}
+                                    </Button.Label>
+                                </Button.Root>
+                            </AlertDialog.Action>
+                        </AlertDialog.Actions>
+                    </AlertDialog.Content>
+                </AlertDialog.Portal>
+            </AlertDialog.Root>
+            {children}
+        </ConfirmDialogContext.Provider>
+    )
+}
+```
+
+## How to use Confirm Dialog API
+To use the Confirm Dialog API, you need to wrap your application with the `ConfirmDialogProvider` component. This will provide the `dialog` function to all the components in your application.
+
+```tsx title="App.tsx"
+
+import { ConfirmDialogProvider } from "./components/ConfirmDialogProvider"
+
+const App = () => {
+    return (
+        <ConfirmDialogProvider>
+            <Centered />
+        </ConfirmDialogProvider>
+    )
+}
+
+export default App
+```
+
+Now, you can use the `dialog` function in any component to show the Confirm Dialog.
+
+```tsx title="components/ConfirmDialog.tsx"
+import { usePromt } from "./ConfirmDialogProvider"
+
+const DeleteButton = () => {
+    const dialog = usePromt()
+    const handleDelete = async () => {
+        const isDelete = await dialog({
+            title: "Are you absolutely sure?",
+            description: "This photo will be deleted from your iCloud Photos.",
+            confirmLabel: "Yes, Delete",
+            cancelLabel: "Cancel",
+        })
+        if(isDelete) {
+            // delete the item
+        }
+    }
+    return (
+        <Button.Root variant="soft" intent="danger" onClick={handleDelete}>
+            <Button.Icon type="leading" size="sm">
+                <Trash />
+            </Button.Icon>
+            <Button.Label>Delete</Button.Label>
+        </Button.Root>
+    )
+}
+```
+
+## Conclusion
+
+In this article, we have created a Confirm Dialog using React Context API. This way, we can create a single Confirm Dialog component and use it in multiple components. This will help us to avoid code duplication and keep our codebase clean and maintainable. I hope you find this article helpful. If you have any questions or feedback, feel free to leave a comment below. Thank you for reading!
+
